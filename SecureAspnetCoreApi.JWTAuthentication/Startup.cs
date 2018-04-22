@@ -1,12 +1,10 @@
-﻿using System;
-using System.Text;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.IdentityModel.Tokens;
+using SecureAspnetCoreApi.JWTAuthentication.Configuration;
 
 namespace SecureAspnetCoreApi.JWTAuthentication
 {
@@ -24,19 +22,9 @@ namespace SecureAspnetCoreApi.JWTAuthentication
         {
             // Configure JWT Auth Service
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                    .AddJwtBearer(options => {
-                        options.TokenValidationParameters = new TokenValidationParameters
-                        {
-                            ValidateIssuer = true,
-                            ValidateAudience = true,
-                            ValidateLifetime = true,
-                            ValidateIssuerSigningKey = true,
-                            ValidIssuer = Configuration["Jwt:Issuer"],
-                            ValidAudience = Configuration["Jwt:Audience"],
-                            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Jwt:Key"])),
-                            ClockSkew = TimeSpan.Zero //validate time immediately in Expire field because of it's default value is 5 minutes
-                        };
-                    });
+                    .AddCustomJwtBearer(Configuration["Jwt:Issuer"], 
+                                        Configuration["Jwt:Audience"], 
+                                        Configuration["Jwt:Key"]);
 
             services.AddMvc();
 
@@ -50,6 +38,9 @@ namespace SecureAspnetCoreApi.JWTAuthentication
                 });
             });
             services.AddSingleton<IAuthorizationHandler, Framework.AgeRestrictionHandler>();
+
+            // Register Swagger Generator
+            services.AddCustomSwaggerGen();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -59,6 +50,8 @@ namespace SecureAspnetCoreApi.JWTAuthentication
             {
                 app.UseDeveloperExceptionPage();
             }
+
+            app.UseCustomSwagger();
 
             // Enable JWT Auth Service
             app.UseAuthentication();

@@ -6,11 +6,19 @@ using Microsoft.AspNetCore.Mvc;
 namespace SecureAspnetCoreApi.JWTAuthentication.Controllers
 {
     [Produces("application/json")]
-    [Route("api/Book")]
+    [Route("api/[Controller]")]
     [Authorize(Policy = "AgeRestriction")]
     public class BookController : Controller
     {
+        /// <summary>
+        /// Return all books
+        /// </summary>
+        /// <returns></returns>
+        /// <response code="200">Sucess. Returns list of books</response>
+        /// <response code="400">Error. Bad Request</response>  
         [HttpGet]
+        [ProducesResponseType(typeof(Book), 200)]
+        [ProducesResponseType(400)]
         public IEnumerable<Book> Get()
         {
             var currentUser = HttpContext.User;

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -11,7 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 namespace SecureAspnetCoreApi.JWTAuthentication.Controllers
 {
     [Produces("application/json")]
-    [Route("api/Token")]
+    [Route("api/[Controller]")]
     public class TokenController : Controller
     {
         private readonly IConfiguration _config;
@@ -21,8 +20,15 @@ namespace SecureAspnetCoreApi.JWTAuthentication.Controllers
             _config = config;
         }
 
+        /// <summary>
+        /// Create a Json Web Token
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
+        /// <response code="200">Success</response>  
         [AllowAnonymous]
         [HttpPost]
+        [ProducesResponseType(200)]
         public IActionResult CreateToken([FromBody]LoginModel model)
         {
             // 1. First: try authenticate user with model submitted
