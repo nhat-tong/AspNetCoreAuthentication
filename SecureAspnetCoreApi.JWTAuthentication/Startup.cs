@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SecureAspnetCoreApi.JWTAuthentication.Configuration;
@@ -26,6 +28,16 @@ namespace SecureAspnetCoreApi.JWTAuthentication
                     .AddCustomJwtBearer(Configuration["Jwt:Issuer"], 
                                         Configuration["Jwt:Audience"], 
                                         Configuration["Jwt:Key"]);
+
+            // Configure API Versioning
+            services.AddApiVersioning(options => 
+            {
+                options.DefaultApiVersion = new ApiVersion(1, 0);
+                //options.AssumeDefaultVersionWhenUnspecified = true;
+                options.ApiVersionReader = ApiVersionReader.Combine(new QueryStringApiVersionReader("v"), 
+                                                                    new HeaderApiVersionReader() { HeaderNames = { "v" } });
+                options.ReportApiVersions = true;
+            });
 
             services.AddMvc();
 

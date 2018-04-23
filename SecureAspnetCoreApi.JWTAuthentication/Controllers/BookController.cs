@@ -2,19 +2,19 @@
 using System.Linq;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SecureAspnetCoreApi.JWTAuthentication.Data;
 using SecureAspnetCoreApi.JWTAuthentication.Models;
 
 namespace SecureAspnetCoreApi.JWTAuthentication.Controllers
 {
+    [ApiVersion("1.0")]
     [Produces("application/json")]
-    [Route("api/[Controller]")]
+    [Route("api/book")]
     [Authorize(Policy = "AgeRestriction")]
     public class BookController : BaseController
     {
-        private readonly IMapper _mapper;
+        protected readonly IMapper _mapper;
 
         public BookController(IMapper mapper)
         {
@@ -30,10 +30,9 @@ namespace SecureAspnetCoreApi.JWTAuthentication.Controllers
         [HttpGet]
         [ProducesResponseType(typeof(Book), 200)]
         [ProducesResponseType(400)]
-        public IEnumerable<BookModel> Get()
+        public virtual IActionResult Get()
         {
-            var currentUser = HttpContext.User;
-            return _mapper.Map<IEnumerable<Book>, IEnumerable<BookModel>>(GetBooks());
+            return Ok(_mapper.Map<IEnumerable<Book>, IEnumerable<BookModel>>(GetBooks()));
         }
 
         /// <summary>
@@ -44,9 +43,12 @@ namespace SecureAspnetCoreApi.JWTAuthentication.Controllers
         /// <response code="200">Success</response> 
         [HttpGet("{id:int}", Name = "GetBookById")]
         [ProducesResponseType(200)]
-        public BookModel Get(int id)
+        public virtual IActionResult Get(int id)
         {
-            return _mapper.Map<Book, BookModel>(GetBooks().FirstOrDefault(x => x.Id == id));
+            var book = GetBooks().FirstOrDefault(x => x.Id == id);
+            if (book == null) return NotFound();
+
+            return Ok(_mapper.Map<Book, BookModel>(book));
         }
 
         private IEnumerable<Book> GetBooks()

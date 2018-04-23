@@ -1,9 +1,13 @@
 ﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
+using SecureAspnetCoreApi.JWTAuthentication.Framework;
 using Swashbuckle.AspNetCore.Swagger;
+using Swashbuckle.AspNetCore.SwaggerGen;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 
 namespace SecureAspnetCoreApi.JWTAuthentication.Configuration
@@ -14,7 +18,10 @@ namespace SecureAspnetCoreApi.JWTAuthentication.Configuration
         {
             services.AddSwaggerGen(options =>
             {
-                options.SwaggerDoc("api-v1", new Info { Title = "AspnetCore API", Description = "A demo using Jwt Authentication", Version = "v1" });
+                options.SwaggerDoc("api-v1", new Info { Title = "Jwt Auth API v1", Description = "A demo using Jwt Authentication", Version = "v1" });
+                options.SwaggerDoc("api-v2", new Info { Title = "Jwt Auth API v2", Description = "A demo using Jwt Authentication", Version = "v2" });
+
+                options.CustomSchemaIds(x => x.FullName);
 
                 // add authorization scheme in api header
                 options.AddSecurityDefinition("BearerScheme", new ApiKeyScheme
@@ -24,6 +31,7 @@ namespace SecureAspnetCoreApi.JWTAuthentication.Configuration
                     In = "header",
                     Type = "apiKey"
                 });
+
                 options.AddSecurityRequirement(new Dictionary<string, IEnumerable<string>>
                 {
                     { "BearerScheme", new string[] { } }
@@ -33,6 +41,19 @@ namespace SecureAspnetCoreApi.JWTAuthentication.Configuration
                 var xmlFile = $"{Assembly.GetEntryAssembly().GetName().Name}.xml";
                 var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
                 options.IncludeXmlComments(xmlPath);
+
+                // Create Swagger Documents by version
+                options.DocInclusionPredicate((docName, apiDesc) =>
+                {
+                    var versions = apiDesc.ControllerAttributes()
+                        .OfType<ApiVersionAttribute>()
+                        .SelectMany(attr => attr.Versions);
+
+                    return versions.Any(v => $"api-v{v.MajorVersion}" == docName);
+                });
+
+                // Add custom version header
+                options.DocumentFilter<AddVersionHeader>();
             });
 
             return services;
@@ -43,7 +64,9 @@ namespace SecureAspnetCoreApi.JWTAuthentication.Configuration
             app.UseSwagger();
             app.UseSwaggerUI(options =>
             {
-                options.SwaggerEndpoint("/swagger/api-v1/swagger.json", "JWT Authentication API");
+                options.SwaggerEndpoint("/swagger/api-v1/swagger.json", "JWT Authentication API v1");
+                options.SwaggerEndpoint("/swagger/api-v2/swagger.json", "JWT Authentication API v2");
+
                 options.RoutePrefix = string.Empty;
             });
 
