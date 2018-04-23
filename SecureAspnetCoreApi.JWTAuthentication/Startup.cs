@@ -1,24 +1,30 @@
-﻿using AutoMapper;
+﻿#region using
+using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Versioning;
+using Microsoft.AspNetCore.Rewrite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SecureAspnetCoreApi.JWTAuthentication.Configuration;
+#endregion
 
 namespace SecureAspnetCoreApi.JWTAuthentication
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        public Startup(IConfiguration configuration, IHostingEnvironment env)
         {
             Configuration = configuration;
+            _env = env;
         }
 
         public IConfiguration Configuration { get; }
+
+        private readonly IHostingEnvironment _env;
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -40,6 +46,11 @@ namespace SecureAspnetCoreApi.JWTAuthentication
             });
 
             services.AddMvc();
+            // Configure https for staging/production: https://docs.microsoft.com/en-us/aspnet/core/security/enforcing-ssl?view=aspnetcore-2.0&tabs=visual-studio 
+            if (!_env.IsDevelopment())
+            {
+                services.Configure<MvcOptions>(options => options.Filters.Add(new RequireHttpsAttribute()));
+            }
 
             services.AddAuthorization(options =>
             {
@@ -59,11 +70,15 @@ namespace SecureAspnetCoreApi.JWTAuthentication
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app)
         {
-            if (env.IsDevelopment())
+            if (_env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+            }
+            else
+            {
+                app.UseRewriter(new RewriteOptions().AddRedirectToHttps());
             }
 
             app.UseCustomSwagger();
