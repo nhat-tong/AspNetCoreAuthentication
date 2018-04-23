@@ -21,6 +21,7 @@ namespace SecureAspnetCoreApi.JWTAuthentication
             WebHost.CreateDefaultBuilder(args)
                 .UseApplicationInsights()
                 .UseStartup<Startup>()
+                .UseKestrel(options => options.AddServerHeader = false) // Configure Kestrel options: https://docs.microsoft.com/en-us/aspnet/core/fundamentals/servers/kestrel?view=aspnetcore-2.0&tabs=aspnetcore2x
                 .Build();
     }
 }
